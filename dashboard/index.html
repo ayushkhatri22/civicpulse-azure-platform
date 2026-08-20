@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CivicPulse — Community Incident Dashboard</title>
+<meta name="description" content="Public dashboard showing community incident reports handled by the council.">
+<style>
+  :root{
+    --black:#0B0B0D;
+    --ink:#1A1A1C;
+    --gold:#8A6D1F;
+    --gold-bright:#D9BE72;
+    --crimson:#8E1B2E;
+    --grey:#55555C;
+    --paper:#FBF8F2;
+    --rule:#E3D9C2;
+    --white:#FFFFFF;
+    --open:#8E1B2E;
+    --progress:#8A6D1F;
+    --resolved:#1F5C3D;
+  }
+
+  *{box-sizing:border-box;}
+
+  html{-webkit-text-size-adjust:100%;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;
+    line-height:1.55;
+  }
+
+  .skip-link{
+    position:absolute; left:-9999px; top:0;
+    background:var(--black); color:var(--gold-bright);
+    padding:.75rem 1.25rem; z-index:100;
+  }
+  .skip-link:focus{left:0;}
+
+  :focus-visible{
+    outline:3px solid var(--crimson);
+    outline-offset:2px;
+  }
+
+  header.site{
+    background:var(--black);
+    border-bottom:4px solid var(--gold);
+    padding:1.75rem 1.25rem 1.5rem;
+  }
+  .wrap{max-width:1120px; margin:0 auto;}
+
+  .eyebrow{
+    color:var(--gold-bright);
+    font-size:.7rem; letter-spacing:.22em; text-transform:uppercase;
+    font-weight:700; margin:0 0 .5rem;
+  }
+  header.site h1{
+    font-family:Georgia,"Times New Roman",serif;
+    color:var(--white);
+    font-size:clamp(1.6rem,4.5vw,2.4rem);
+    margin:0 0 .35rem; line-height:1.15;
+  }
+  header.site p.tagline{
+    color:#CFC9BC; margin:0; font-size:.95rem; max-width:60ch;
+  }
+
+  main{padding:1.5rem 1.25rem 3rem;}
+
+  .updated-bar{
+    display:flex; flex-wrap:wrap; gap:.75rem 1.25rem;
+    align-items:center; justify-content:space-between;
+    background:var(--white); border:1px solid var(--rule);
+    border-left:5px solid var(--gold);
+    padding:.85rem 1.1rem; margin-bottom:1.5rem;
+  }
+  .updated-bar .label{
+    font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--grey); font-weight:700; display:block;
+  }
+  .updated-bar time, .updated-bar .value{
+    font-weight:700; color:var(--ink); font-size:.95rem;
+  }
+  .rel{color:var(--grey); font-weight:400;}
+
+  .badge{
+    display:inline-block; padding:.2rem .6rem; font-size:.72rem;
+    font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    border-radius:2px;
+  }
+  .badge.stale{background:#FBEAD2; color:#7A4A00; border:1px solid #E0B872;}
+  .badge.live{background:#E4F0E9; color:#1F5C3D; border:1px solid #A9CBB8;}
+
+  button.refresh{
+    font:inherit; font-size:.85rem; font-weight:700;
+    background:var(--black); color:var(--gold-bright);
+    border:none; padding:.55rem 1.1rem; cursor:pointer;
+  }
+  button.refresh:hover{background:#22222A;}
+  button.refresh[disabled]{opacity:.5; cursor:progress;}
+
+  h2.section{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:1.25rem; color:var(--crimson);
+    margin:2.25rem 0 .9rem;
+  }
+
+  /* ---- KPI cards ---- */
+  .kpis{
+    display:grid; gap:1rem;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    margin:0; padding:0; list-style:none;
+  }
+  .kpi{
+    background:var(--white); border:1px solid var(--rule);
+    border-top:4px solid var(--gold); padding:1.1rem 1.15rem;
+  }
+  .kpi.is-open{border-top-color:var(--open);}
+  .kpi.is-progress{border-top-color:var(--progress);}
+  .kpi.is-resolved{border-top-color:var(--resolved);}
+  .kpi dt{
+    font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--grey); font-weight:700; margin:0 0 .35rem;
+  }
+  .kpi dd{
+    margin:0; font-family:Georgia,serif; font-size:2.4rem;
+    line-height:1; color:var(--black); font-weight:700;
+  }
+  .kpi .sub{
+    display:block; font-family:inherit; font-size:.8rem;
+    color:var(--grey); font-weight:400; margin-top:.4rem;
+  }
+
+  /* ---- Chart ---- */
+  .chart-head{
+    display:flex; flex-wrap:wrap; gap:.6rem;
+    align-items:baseline; justify-content:space-between;
+  }
+  .toggle{display:flex; gap:.4rem;}
+  .toggle button{
+    font:inherit; font-size:.8rem; font-weight:700;
+    background:var(--white); color:var(--grey);
+    border:1px solid var(--rule); padding:.4rem .9rem; cursor:pointer;
+  }
+  .toggle button[aria-pressed="true"]{
+    background:var(--black); color:var(--gold-bright); border-color:var(--black);
+  }
+
+  .chart{
+    background:var(--white); border:1px solid var(--rule);
+    padding:1.25rem 1.15rem; margin-top:.75rem;
+  }
+  .bar-row{
+    display:grid; grid-template-columns:minmax(90px,150px) 1fr auto;
+    gap:.75rem; align-items:center; margin-bottom:.7rem;
+  }
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-label{display:block; font-size:.85rem; color:var(--ink); font-weight:600;}
+  .bar-track{display:block; background:#F0EAE0; height:22px; position:relative; overflow:hidden;}
+  .bar-fill{
+    display:block;
+    background:var(--gold); height:100%; width:0; min-width:2px;
+    transition:width .5s ease;
+  }
+  .bar-fill.p-high{background:var(--crimson);}
+  .bar-fill.p-medium{background:var(--gold);}
+  .bar-fill.p-low{background:#7A8B7F;}
+  .bar-count{
+    display:block;
+    font-variant-numeric:tabular-nums; font-weight:700;
+    font-size:.9rem; min-width:2.5rem; text-align:right;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bar-fill{transition:none;}
+  }
+
+  /* ---- Table ---- */
+  .table-scroll{overflow-x:auto; background:var(--white); border:1px solid var(--rule);}
+  table{border-collapse:collapse; width:100%; min-width:620px;}
+  caption{
+    text-align:left; padding:.9rem 1rem .2rem;
+    font-size:.85rem; color:var(--grey);
+  }
+  th{
+    background:var(--black); color:var(--gold-bright);
+    font-size:.68rem; letter-spacing:.13em; text-transform:uppercase;
+    text-align:left; padding:.7rem 1rem; font-weight:700;
+    border-bottom:3px solid var(--gold);
+  }
+  td{
+    padding:.65rem 1rem; border-bottom:1px solid var(--rule);
+    font-size:.9rem;
+  }
+  tbody tr:nth-child(even){background:var(--paper);}
+  td.id{font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:.82rem;}
+
+  .pill{
+    display:inline-block; padding:.15rem .55rem; font-size:.74rem;
+    font-weight:700; border-radius:999px; white-space:nowrap;
+  }
+  .pill.s-open{background:#F7E3E6; color:var(--open);}
+  .pill.s-inprogress{background:#F7EFDA; color:#6B5416;}
+  .pill.s-resolved{background:#E4F0E9; color:var(--resolved);}
+
+  /* ---- States ---- */
+  .state{
+    background:var(--white); border:1px solid var(--rule);
+    border-left:5px solid var(--gold); padding:1.5rem 1.25rem;
+    margin:1rem 0;
+  }
+  .state.error{border-left-color:var(--crimson);}
+  .state h3{margin:0 0 .4rem; font-family:Georgia,serif; font-size:1.05rem;}
+  .state p{margin:0 0 .8rem; color:var(--grey); font-size:.92rem;}
+  .state p:last-child{margin-bottom:0;}
+  .hidden{display:none;}
+
+  .spinner{
+    width:26px; height:26px; border:3px solid var(--rule);
+    border-top-color:var(--gold); border-radius:50%;
+    animation:spin .8s linear infinite; margin-bottom:.8rem;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion:reduce){
+    .spinner{animation:none;}
+  }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0 0 0 0); white-space:nowrap;
+  }
+
+  footer.site{
+    border-top:1px solid var(--rule); margin-top:2.5rem;
+    padding:1.5rem 1.25rem; color:var(--grey); font-size:.82rem;
+  }
+  footer.site p{margin:0 0 .5rem; max-width:75ch;}
+  footer.site p:last-child{margin-bottom:0;}
+
+  @media (max-width:520px){
+    .bar-row{grid-template-columns:1fr auto; }
+    .bar-track{grid-column:1 / -1; order:3;}
+  }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to dashboard content</a>
+
+<header class="site">
+  <div class="wrap">
+    <p class="eyebrow">Community Transparency</p>
+    <h1>CivicPulse Incident Dashboard</h1>
+    <p class="tagline">Community service incidents reported to the council — graffiti, potholes, dumped rubbish, water leaks, streetlight faults and more.</p>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+
+    <!-- Last updated + refresh -->
+    <div class="updated-bar">
+      <div>
+        <span class="label" id="updated-label">Data last updated</span>
+        <time id="updated-time" datetime="" aria-describedby="updated-label">—</time>
+        <span class="rel" id="updated-rel"></span>
+      </div>
+      <div>
+        <span id="freshness" class="badge live hidden">Current</span>
+        <button type="button" class="refresh" id="refresh-btn">Refresh data</button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="state" id="loading-state" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <h3>Loading incident data</h3>
+      <p>Retrieving the latest published dataset.</p>
+    </div>
+
+    <!-- Error state -->
+    <div class="state error hidden" id="error-state" role="alert">
+      <h3>Incident data could not be loaded</h3>
+      <p id="error-detail">The dashboard could not retrieve the published dataset. This is usually temporary.</p>
+      <button type="button" class="refresh" id="retry-btn">Try again</button>
+    </div>
+
+    <!-- Empty state -->
+    <div class="state hidden" id="empty-state" role="status">
+      <h3>No incidents in the current dataset</h3>
+      <p>The most recent processed file contained no valid incident records. Figures will appear here once new reports are processed.</p>
+    </div>
+
+    <!-- Dashboard content -->
+    <div id="dashboard" class="hidden" aria-live="polite">
+
+      <h2 class="section" id="kpi-heading">Incident summary</h2>
+      <dl class="kpis" aria-labelledby="kpi-heading">
+        <div class="kpi"><dt>Total incidents</dt><dd id="kpi-total">—</dd></div>
+        <div class="kpi is-open"><dt>Open</dt><dd id="kpi-open">—<span class="sub" id="kpi-open-pct"></span></dd></div>
+        <div class="kpi is-progress"><dt>In progress</dt><dd id="kpi-progress">—<span class="sub" id="kpi-progress-pct"></span></dd></div>
+        <div class="kpi is-resolved"><dt>Resolved</dt><dd id="kpi-resolved">—<span class="sub" id="kpi-resolved-pct"></span></dd></div>
+      </dl>
+
+      <div class="chart-head">
+        <h2 class="section" id="chart-heading" style="margin-bottom:.4rem;">Incidents by <span id="chart-dimension">category</span></h2>
+        <div class="toggle" role="group" aria-label="Choose chart breakdown">
+          <button type="button" id="btn-category" aria-pressed="true">By category</button>
+          <button type="button" id="btn-priority" aria-pressed="false">By priority</button>
+        </div>
+      </div>
+      <div class="chart" id="chart" role="img" aria-labelledby="chart-heading" aria-describedby="chart-summary"></div>
+      <p class="visually-hidden" id="chart-summary"></p>
+
+      <h2 class="section" id="table-heading">Most recent reports</h2>
+      <div class="table-scroll">
+        <table aria-labelledby="table-heading">
+          <caption>The ten most recently reported incidents. Locations are shown at suburb level only.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Reference</th>
+              <th scope="col">Reported</th>
+              <th scope="col">Suburb</th>
+              <th scope="col">Category</th>
+              <th scope="col">Status</th>
+              <th scope="col">Priority</th>
+            </tr>
+          </thead>
+          <tbody id="recent-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p><strong>Privacy note.</strong> This dashboard publishes only approved fields. Incident descriptions and precise coordinates are removed during processing and are never released publicly. Locations are reported at suburb level so that individual properties cannot be identified.</p>
+    <p>Figures are generated automatically from validated incident records. Records failing validation are excluded from these totals and reviewed separately by council staff.</p>
+    <p>CivicPulse — a civic incident data platform. Data refreshes automatically when new reports are processed.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
