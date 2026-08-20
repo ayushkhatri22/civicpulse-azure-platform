@@ -1,0 +1,61 @@
+incident_id,reported_date,suburb,category,status,priority,description,lat,lon
+INC0001,2026-03-11,Craigieburn,Noise Complaint,Resolved,Low,Noise Complaint reported near Craigieburn community area,-37.760765,144.919413
+INC0002,2026-03-02,Carlton,Noise Complaint,Open,Low,Noise Complaint reported near Carlton community area,-37.620957,144.754428
+INC0003,14/03/2026,Frankston,Graffiti,Resolved,High,Graffiti reported near Frankston community area,-37.78823,145.268625
+INC0004,2026-03-19,Coburg,Dumped Rubbish,Open,Low,Dumped Rubbish reported near Coburg community area,-37.857541,144.873766
+INC0005,2026-03-05,Frankston,Dumped Rubbish,Resolved,Medium,Dumped Rubbish reported near Frankston community area,-37.654218,145.04896
+INC0006,2026-03-21,Werribee,Graffiti,Open,Medium,Graffiti reported near Werribee community area,-37.61788,144.823575
+INC0007,2026-03-22,Hawthorn,Dumped Rubbish,Resolved,Medium,Dumped Rubbish reported near Hawthorn community area,-37.735955,144.87986
+INC0008,2026-03-26,Fitzroy,Graffiti,Resolved,Low,Graffiti reported near Fitzroy community area,-37.757559,145.225082
+INC0009,2026-03-24,Coburg,Dumped Rubbish,Resolved,Low,Dumped Rubbish reported near Coburg community area,-37.725437,145.154285
+INC0010,2026-03-05,Sunshine,Noise Complaint,Resolved,High,Noise Complaint reported near Sunshine community area,-37.829371,145.043816
+INC0011,2026-03-11,Dandenong,Streetlight Fault,Pendng,Medium,Streetlight Fault reported near Dandenong community area,-37.736862,145.203981
+INC0012,2026-03-09,Box Hill,Dumped Rubbish,Resolved,Low,Dumped Rubbish reported near Box Hill community area,-37.692882,145.046768
+INC0013,2026-03-22,Frankston,Tree Down,Open,Low,Tree Down reported near Frankston community area,-37.704102,145.264389
+INC0014,2026-03-12,Dandenong,Graffiti,Open,Low,Graffiti reported near Dandenong community area,-37.68623,145.143018
+INC0015,2026-03-13,Richmond,Streetlight Fault,In Progress,Low,Streetlight Fault reported near Richmond community area,-37.720493,144.866703
+INC0016,2026-03-05,Carlton,Tree Down,In Progress,Low,Tree Down reported near Carlton community area,-37.89594,145.109634
+INC0017,2026-03-13,Brunswick,Noise Complaint,Open,Low,Noise Complaint reported near Brunswick community area,-37.797555,144.707238
+INC0018,2026-03-19,Coburg,Graffiti,Open,Low,Graffiti reported near Coburg community area,-37.710776,145.039805
+INC0019,2026-03-05,Frankston,Pothole,Resolved,Urgent,Pothole reported near Frankston community area,-37.821935,144.973986
+INC0020,2026-03-25,Carlton,Noise Complaint,Resolved,Medium,Noise Complaint reported near Carlton community area,-37.719694,144.762122
+INC0021,2026-03-21,Richmond,Streetlight Fault,Open,High,Streetlight Fault reported near Richmond community area,-37.648691,144.904032
+INC0022,2026-03-02,St Kilda,Graffiti,Resolved,Medium,Graffiti reported near St Kilda community area,-37.784121,144.742189
+INC0023,2026-03-07,St Kilda,Dumped Rubbish,Open,Low,Dumped Rubbish reported near St Kilda community area,-37.780684,144.984491
+INC0024,2026-03-04,Richmond,Tree Down,In Progress,Medium,Tree Down reported near Richmond community area,-37.693556,144.78647
+INC0025,2026-03-24,Preston,Streetlight Fault,Open,Medium,Streetlight Fault reported near Preston community area,-37.7549,144.823129
+INC0026,2026-03-17,Dandenong,Streetlight Fault,Resolved,High,Streetlight Fault reported near Dandenong community area,-37.758433,145.287101
+,2026-03-03,Preston,Pothole,Open,Low,Pothole reported near Preston community area,-37.706709,144.833676
+INC0028,2026-03-18,Dandenong,Pothole,Open,Low,Pothole reported near Dandenong community area,-37.83652,145.154993
+INC0029,2026-03-07,Brunswick,Tree Down,In Progress,Medium,Tree Down reported near Brunswick community area,-37.659975,144.995669
+INC0030,2026-03-24,Fitzroy,Graffiti,Open,Low,Graffiti reported near Fitzroy community area,-37.658093,145.063083
+INC0031,2026-03-12,St Kilda,Dumped Rubbish,In Progress,High,Dumped Rubbish reported near St Kilda community area,-37.624161,144.761294
+INC0032,2026-03-16,Hawthorn,Graffiti,Open,Medium,Graffiti reported near Hawthorn community area,-37.783079,144.701145
+INC0033,2026-03-21,Sunshine,Streetlight Fault,Resolved,Medium,Streetlight Fault reported near Sunshine community area,-37.872933,145.169382
+INC0034,2026-03-25,Frankston,Graffiti,In Progress,Low,Graffiti reported near Frankston community area,-37.699755,145.180494
+INC0035,2026-03-24,Box Hill,Streetlight Fault,Resolved,High,Streetlight Fault reported near Box Hill community area,-37.647657,145.295867
+INC0036,2026-03-01,Preston,Graffiti,In Progress,Medium,Graffiti reported near Preston community area,-37.783472,145.057522
+INC0037,2026-03-16,Preston,Pothole,Resolved,Medium,Pothole reported near Preston community area,-37.606419,145.179614
+INC0038,2026-03-24,Carlton,Pothole,Resolved,High,Pothole reported near Carlton community area,-37.895965,144.816883
+INC0039,2026-03-07,Dandenong,Graffiti,Open,Medium,Graffiti reported near Dandenong community area,-37.775931,144.855619
+INC0040,2026-03-14,Hawthorn,Tree Down,Open,Medium,Tree Down reported near Hawthorn community area,-37.737448,145.050009
+INC0041,2026-03-17,Coburg,Streetlight Fault,In Progress,Medium,Streetlight Fault reported near Coburg community area,-37.645551,145.006328
+INC0042,2026-03-15,Preston,Pothole,Resolved,Medium,Pothole reported near Preston community area,-37.651704,144.984096
+INC0043,2026-03-24,Coburg,Graffiti,Open,Medium,Graffiti reported near Coburg community area,-37.766633,145.170563
+INC0044,2026-03-04,,Noise Complaint,Open,Low,Noise Complaint reported near Footscray community area,-37.831678,145.004628
+INC0045,2026-03-18,St Kilda,Graffiti,In Progress,Low,Graffiti reported near St Kilda community area,-37.783758,145.003332
+INC0046,2026-03-17,Dandenong,Graffiti,Open,Medium,Graffiti reported near Dandenong community area,-37.743411,145.264901
+INC0047,2026-03-23,Hawthorn,Dumped Rubbish,In Progress,High,Dumped Rubbish reported near Hawthorn community area,-37.767854,145.26596
+INC0048,2026-03-15,Sunshine,Graffiti,Open,Low,Graffiti reported near Sunshine community area,-37.801347,144.957003
+INC0049,2026-03-07,Preston,Pothole,Resolved,High,Pothole reported near Preston community area,-37.881851,145.086075
+INC0050,2026-03-12,Brunswick,Graffiti,In Progress,High,Graffiti reported near Brunswick community area,-37.824005,144.756475
+INC0051,2026-03-16,Box Hill,Graffiti,Resolved,Low,Graffiti reported near Box Hill community area,-37.729457,145.009363
+INC0052,2026-03-11,St Kilda,Streetlight Fault,Resolved,Low,Streetlight Fault reported near St Kilda community area,-37.605845,145.03243
+INC0053,2026-03-15,Fitzroy,Pothole,Resolved,Medium,Pothole reported near Fitzroy community area,-37.753679,144.738574
+INC0054,2026-03-26,Fitzroy,Water Leak,In Progress,Low,Water Leak reported near Fitzroy community area,-37.611876,145.167398
+INC0055,2026-03-09,Frankston,Pothole,In Progress,Medium,Pothole reported near Frankston community area,-37.845694,144.855165
+INC0056,2026-03-05,St Kilda,Dumped Rubbish,Resolved,Medium,Dumped Rubbish reported near St Kilda community area,-37.626839,144.734516
+INC0057,2026-03-23,Footscray,Graffiti,In Progress,Low,Graffiti reported near Footscray community area,-37.790332,145.180977
+INC0058,2026-03-03,Sunshine,Dumped Rubbish,Open,Low,Dumped Rubbish reported near Sunshine community area,-37.736132,144.903491
+INC0059,2026-03-18,Footscray,Streetlight Fault,In Progress,Medium,Streetlight Fault reported near Footscray community area,-37.758075,144.843062
+INC0060,2026-03-04,Hawthorn,Noise Complaint,Open,Low,Noise Complaint reported near Hawthorn community area,-37.693598,144.883003

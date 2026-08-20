@@ -1,0 +1,608 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "When_a_blob_is_added_or_modified_(properties_only)_(V2)": {
+                "recurrence": {
+                    "interval": 1,
+                    "frequency": "Minute"
+                },
+                "evaluatedRecurrence": {
+                    "interval": 1,
+                    "frequency": "Minute"
+                },
+                "splitOn": "@triggerBody()",
+                "metadata": {
+                    "JTJmcmF3LWRhdGE=": "/raw-data"
+                },
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                        }
+                    },
+                    "method": "get",
+                    "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/triggers/batch/onupdatedfile",
+                    "queries": {
+                        "folderId": "JTJmcmF3LWRhdGE=",
+                        "maxFileCount": 10,
+                        "checkBothCreatedAndModifiedDateTime": false
+                    }
+                }
+            }
+        },
+        "actions": {
+            "StartTime": {
+                "runAfter": {},
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "StartTime",
+                            "type": "string",
+                            "value": "@{utcNow()}"
+                        }
+                    ]
+                }
+            },
+            "byCategory": {
+                "runAfter": {
+                    "StartTime": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "byCategory",
+                            "type": "array",
+                            "value": []
+                        }
+                    ]
+                }
+            },
+            "Initialize_variables_2": {
+                "runAfter": {
+                    "byCategory": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "byPriority",
+                            "type": "array",
+                            "value": []
+                        }
+                    ]
+                }
+            },
+            "ScopeTry": {
+                "actions": {
+                    "GetBlob": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/files/@{encodeURIComponent(encodeURIComponent(triggerBody()?['Path']))}/content",
+                            "queries": {
+                                "inferContentType": false
+                            }
+                        }
+                    },
+                    "SplitByLines": {
+                        "runAfter": {
+                            "GetBlob": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Compose",
+                        "inputs": "@split(replace(base64ToString(body('GetBlob')?['$content']), decodeUriComponent('%0D'), ''), decodeUriComponent('%0A'))"
+                    },
+                    "DataRows": {
+                        "runAfter": {
+                            "SplitByLines": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@skip(outputs('SplitByLines'), 1)",
+                            "where": "@not(empty(trim(item())))"
+                        }
+                    },
+                    "MapRows": {
+                        "runAfter": {
+                            "DataRows": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Select",
+                        "inputs": {
+                            "from": "@body('DataRows')",
+                            "select": {
+                                "incident_id": "@trim(split(item(), ',')?[0])",
+                                "reported_date": "@trim(split(item(), ',')?[1])",
+                                "suburb": "@trim(split(item(), ',')?[2])",
+                                "category": "@trim(split(item(), ',')?[3])",
+                                "status": "@trim(split(item(), ',')?[4])",
+                                "priority": "@trim(split(item(), ',')?[5])"
+                            }
+                        }
+                    },
+                    "ValidRecords": {
+                        "runAfter": {
+                            "MapRows": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@body('MapRows')",
+                            "where": "@and(\n  not(empty(trim(coalesce(item()?['incident_id'],'')))),\n  not(empty(trim(coalesce(item()?['suburb'],'')))),\n  not(empty(trim(coalesce(item()?['category'],'')))),\n  equals(length(trim(coalesce(item()?['reported_date'],''))), 10),\n  equals(substring(concat(trim(coalesce(item()?['reported_date'],'')),'0000000000'), 4, 1), '-'),\n  equals(substring(concat(trim(coalesce(item()?['reported_date'],'')),'0000000000'), 7, 1), '-'),\n  contains(createArray('Open','Resolved','In Progress'), trim(coalesce(item()?['status'],''))),\n  contains(createArray('High','Medium','Low'), trim(coalesce(item()?['priority'],'')))\n)"
+                        }
+                    },
+                    "InvalidRecords": {
+                        "runAfter": {
+                            "ValidRecords": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@body('MapRows')",
+                            "where": "@not(and(\n  not(empty(trim(coalesce(item()?['incident_id'],'')))),\n  not(empty(trim(coalesce(item()?['suburb'],'')))),\n  not(empty(trim(coalesce(item()?['category'],'')))),\n  equals(length(trim(coalesce(item()?['reported_date'],''))), 10),\n  equals(substring(concat(trim(coalesce(item()?['reported_date'],'')),'0000000000'), 4, 1), '-'),\n  equals(substring(concat(trim(coalesce(item()?['reported_date'],'')),'0000000000'), 7, 1), '-'),\n  contains(createArray('Open','Resolved','In Progress'), trim(coalesce(item()?['status'],''))),\n  contains(createArray('High','Medium','Low'), trim(coalesce(item()?['priority'],'')))\n))"
+                        }
+                    },
+                    "OpenIncidents": {
+                        "runAfter": {
+                            "InvalidRecords": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@body('ValidRecords')",
+                            "where": "@equals(item()?['status'], 'Open')"
+                        }
+                    },
+                    "ResolvedIncidents": {
+                        "runAfter": {
+                            "OpenIncidents": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@body('ValidRecords')",
+                            "where": "@equals(item()?['status'], 'Resolved')"
+                        }
+                    },
+                    "InProgressIncidents": {
+                        "runAfter": {
+                            "ResolvedIncidents": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Query",
+                        "inputs": {
+                            "from": "@body('ValidRecords')",
+                            "where": "@equals(item()?['status'], 'In Progress')"
+                        }
+                    },
+                    "CategoryValues": {
+                        "runAfter": {
+                            "InProgressIncidents": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Select",
+                        "inputs": {
+                            "from": "@body('ValidRecords')",
+                            "select": "@item()?['category']"
+                        }
+                    },
+                    "DistinctCategories": {
+                        "runAfter": {
+                            "CategoryValues": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Compose",
+                        "inputs": "@union(body('CategoryValues'), body('CategoryValues'))"
+                    },
+                    "ForEachCategory": {
+                        "foreach": "@outputs('DistinctCategories')",
+                        "actions": {
+                            "CategoryMatches": {
+                                "type": "Query",
+                                "inputs": {
+                                    "from": "@body('ValidRecords')",
+                                    "where": "@equals(item()?['category'], items('ForEachCategory'))"
+                                }
+                            },
+                            "Append_to_array_variable": {
+                                "runAfter": {
+                                    "CategoryMatches": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "AppendToArrayVariable",
+                                "inputs": {
+                                    "name": "byCategory",
+                                    "value": {
+                                        "category": "@{items('ForEachCategory')}",
+                                        "count": "@length(body('CategoryMatches'))"
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "DistinctCategories": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Foreach",
+                        "runtimeConfiguration": {
+                            "concurrency": {
+                                "repetitions": 1
+                            }
+                        }
+                    },
+                    "PriorityValues": {
+                        "runAfter": {
+                            "ForEachCategory": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Select",
+                        "inputs": {
+                            "from": "@body('ValidRecords')",
+                            "select": "@item()?['priority']"
+                        }
+                    },
+                    "DistinctPriorities": {
+                        "runAfter": {
+                            "PriorityValues": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Compose",
+                        "inputs": "@union(body('PriorityValues'), body('PriorityValues'))"
+                    },
+                    "ForEachPriority": {
+                        "foreach": "@outputs('DistinctPriorities')",
+                        "actions": {
+                            "PriorityMatches": {
+                                "type": "Query",
+                                "inputs": {
+                                    "from": "@body('ValidRecords')",
+                                    "where": "@equals(item()?['priority'], items('ForEachPriority'))"
+                                }
+                            },
+                            "Append_to_array_variable_1": {
+                                "runAfter": {
+                                    "PriorityMatches": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "AppendToArrayVariable",
+                                "inputs": {
+                                    "name": "byPriority",
+                                    "value": {
+                                        "priority": "@{items('ForEachPriority')}",
+                                        "count": "@length(body('PriorityMatches'))"
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "DistinctPriorities": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Foreach",
+                        "runtimeConfiguration": {
+                            "concurrency": {
+                                "repetitions": 1
+                            }
+                        }
+                    },
+                    "DashboardJson": {
+                        "runAfter": {
+                            "ForEachPriority": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Compose",
+                        "inputs": {
+                            "lastUpdated": "@{utcNow('yyyy-MM-ddTHH:mm:ssZ')}",
+                            "metrics": {
+                                "totalIncidents": "@length(body('ValidRecords'))",
+                                "openIncidents": "@length(body('OpenIncidents'))",
+                                "resolvedIncidents": "@length(body('ResolvedIncidents'))",
+                                "inProgressIncidents": "@length(body('InProgressIncidents'))"
+                            },
+                            "byCategory": "@variables('byCategory')",
+                            "byPriority": "@variables('byPriority')",
+                            "recentRecords": "@take(reverse(sort(body('ValidRecords'), 'reported_date')), 10)"
+                        }
+                    },
+                    "PublishDashboard": {
+                        "runAfter": {
+                            "DashboardJson": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "body": "@outputs('DashboardJson')",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/files",
+                            "queries": {
+                                "folderPath": "/$web/data",
+                                "name": "dashboard-data.json",
+                                "queryParametersSingleEncoded": true
+                            }
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    },
+                    "HasRejects": {
+                        "actions": {
+                            "WriteRejects": {
+                                "type": "ApiConnection",
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "body": "@body('InvalidRecords')",
+                                    "headers": {
+                                        "ReadFileMetadataFromServer": true
+                                    },
+                                    "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/files",
+                                    "queries": {
+                                        "folderPath": "/rejected-data",
+                                        "name": "@concat('rejects-', triggerBody()?['Name'], '-', utcNow('yyyyMMddHHmmss'), '.json')",
+                                        "queryParametersSingleEncoded": true
+                                    }
+                                },
+                                "runtimeConfiguration": {
+                                    "contentTransfer": {
+                                        "transferMode": "Chunked"
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "PublishDashboard": [
+                                "Succeeded"
+                            ]
+                        },
+                        "else": {
+                            "actions": {}
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "greater": [
+                                        "@length(body('InvalidRecords'))",
+                                        0
+                                    ]
+                                }
+                            ]
+                        },
+                        "type": "If"
+                    },
+                    "ArchiveOriginal": {
+                        "runAfter": {
+                            "HasRejects": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "body": "@body('GetBlob')",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/files",
+                            "queries": {
+                                "folderPath": "/archive",
+                                "name": "@concat(utcNow('yyyyMMdd'), '-', triggerBody()?['Name'])",
+                                "queryParametersSingleEncoded": true
+                            }
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    },
+                    "ProcessingLog": {
+                        "runAfter": {
+                            "ArchiveOriginal": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Compose",
+                        "inputs": {
+                            "fileName": "@{triggerBody()?['Name']}",
+                            "processedUtc": "@{utcNow('yyyy-MM-ddTHH:mm:ssZ')}",
+                            "durationSeconds": "@div(sub(ticks(utcNow()), ticks(variables('StartTime'))), 10000000)",
+                            "totalRecords": "@length(body('MapRows'))",
+                            "validRecords": "@length(body('ValidRecords'))",
+                            "invalidRecords": "@length(body('InvalidRecords'))",
+                            "outcome": "Success"
+                        }
+                    },
+                    "WriteLog": {
+                        "runAfter": {
+                            "ProcessingLog": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "body": "@outputs('ProcessingLog')",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/files",
+                            "queries": {
+                                "folderPath": "/processing-logs",
+                                "name": "@concat('run-', utcNow('yyyyMMddHHmmss'), '.json')",
+                                "queryParametersSingleEncoded": true
+                            }
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variables_2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Scope"
+            },
+            "ScopeCatch": {
+                "actions": {
+                    "FailureDetails": {
+                        "type": "Compose",
+                        "inputs": "@result('ScopeTry')"
+                    },
+                    "WriteFailureLog": {
+                        "runAfter": {
+                            "FailureDetails": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azureblob-1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "body": "@outputs('FailureDetails')",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('stcivicpulseprodaue001'))}/files",
+                            "queries": {
+                                "folderPath": "/processing-logs",
+                                "name": "@concat('FAILED-', utcNow('yyyyMMddHHmmss'), '.json')",
+                                "queryParametersSingleEncoded": true
+                            }
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    },
+                    "Send_an_email_(V2)": {
+                        "runAfter": {
+                            "WriteFailureLog": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['office365']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "body": {
+                                "To": "22727228@students.ltu.edu.au",
+                                "Subject": "CivicPulse — processing FAILED",
+                                "Body": "<p class=\"editor-paragraph\">File: @{triggerBody()?['Name']}<br>Run ID: @{workflow()['run']['name']}<br>Details: @{outputs('FailureDetails')}</p>",
+                                "Importance": "Normal"
+                            },
+                            "path": "/v2/Mail"
+                        }
+                    }
+                },
+                "runAfter": {
+                    "ScopeTry": [
+                        "Failed",
+                        "TimedOut",
+                        "Skipped"
+                    ]
+                },
+                "type": "Scope"
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+                "azureblob-1": {
+                    "id": "/subscriptions/c16aefba-e87c-4ae1-b034-248ac60fd4d5/providers/Microsoft.Web/locations/australiaeast/managedApis/azureblob",
+                    "connectionId": "/subscriptions/c16aefba-e87c-4ae1-b034-248ac60fd4d5/resourceGroups/rg-civicpulse-prod-aue-001/providers/Microsoft.Web/connections/azureblob-1",
+                    "connectionName": "azureblob-1",
+                    "connectionProperties": {
+                        "authentication": {
+                            "type": "ManagedServiceIdentity"
+                        }
+                    }
+                },
+                "office365": {
+                    "id": "/subscriptions/c16aefba-e87c-4ae1-b034-248ac60fd4d5/providers/Microsoft.Web/locations/australiaeast/managedApis/office365",
+                    "connectionId": "/subscriptions/c16aefba-e87c-4ae1-b034-248ac60fd4d5/resourceGroups/rg-civicpulse-prod-aue-001/providers/Microsoft.Web/connections/office365",
+                    "connectionName": "office365",
+                    "connectionProperties": {}
+                }
+            }
+        }
+    }
+}
